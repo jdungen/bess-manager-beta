@@ -6,9 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [9.10.0b1] - 2026-07-03
+
 ### Added
 
 - **ENTSO-e / Belpex price provider** — New `entsoe` energy provider reads day-ahead spot prices from the [ENTSO-e Transparency Platform](https://github.com/JaccoR/hass-entso-e) HA integration via the average-price sensor's `prices_today` / `prices_tomorrow` attributes. Supports both hourly (PT60M) and quarterly (PT15M) data, auto-detected by the setup wizard. Prices are treated as VAT-exclusive spot prices. Experimental — not yet real-world validated. (#126)
+- **(beta-only) Multiplicative spot-price adjustment** — `spot_multiplier` / `export_spot_multiplier` settings support contracts that scale the raw spot price rather than only adding a fixed markup (e.g. Belgian Luminus Dynamic: 1.0175× import, 1.018× export). The setup wizard now also pre-fills provider-aware pricing defaults (VAT, markup, multipliers) based on the auto-detected provider. Not yet ported to the production release. (#126)
 
 ### Fixed
 
