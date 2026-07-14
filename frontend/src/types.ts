@@ -129,6 +129,8 @@ export interface ElectricitySettings {
   vatMultiplier: number;
   additionalCosts: number;
   taxReduction: number;
+  // Net metering (e.g. NL saldering): sell price equals full buy price
+  sellPriceEqualsBuyPrice?: boolean;
   area: string;
 }
 

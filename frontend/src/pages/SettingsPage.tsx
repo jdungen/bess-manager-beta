@@ -55,6 +55,7 @@ const EMPTY_PRICING: PricingForm = {
   entsoeEntity: '',
   area: '', markupRate: 0, vatMultiplier: 1.25, additionalCosts: 0,
   taxReduction: 0, spotMultiplier: 1.0, exportSpotMultiplier: 1.0,
+  sellPriceEqualsBuyPrice: false,
 };
 const EMPTY_INVERTER: InverterForm = { inverterPlatform: 'growatt_server_min', deviceId: '', controlMode: 'tou' };
 
@@ -203,6 +204,7 @@ const SettingsPage: React.FC = () => {
         taxReduction: elec_s.taxReduction ?? 0,
         spotMultiplier: elec_s.spotMultiplier ?? 1.0,
         exportSpotMultiplier: elec_s.exportSpotMultiplier ?? 1.0,
+        sellPriceEqualsBuyPrice: elec_s.sellPriceEqualsBuyPrice ?? false,
       };
       setPricingForm(p);
       savedPricing.current = JSON.stringify(p);
@@ -408,6 +410,7 @@ const SettingsPage: React.FC = () => {
           taxReduction: pricingForm.taxReduction,
           spotMultiplier: pricingForm.spotMultiplier,
           exportSpotMultiplier: pricingForm.exportSpotMultiplier,
+          sellPriceEqualsBuyPrice: pricingForm.sellPriceEqualsBuyPrice,
           useActualPrice: false,
         },
         energyProvider: {

@@ -372,6 +372,7 @@ class SettingsStore:
             HOUSE_VOLTAGE_V,
             MARKUP_RATE,
             SAFETY_MARGIN_FACTOR,
+            SELL_PRICE_EQUALS_BUY_PRICE,
             SPOT_MULTIPLIER,
             TAX_REDUCTION,
             USE_ACTUAL_PRICE,
@@ -406,6 +407,7 @@ class SettingsStore:
                 "area": DEFAULT_AREA,
                 "spot_multiplier": SPOT_MULTIPLIER,
                 "export_spot_multiplier": EXPORT_SPOT_MULTIPLIER,
+                "sell_price_equals_buy_price": SELL_PRICE_EQUALS_BUY_PRICE,
                 "use_actual_price": USE_ACTUAL_PRICE,
             },
             "energy_provider": {
@@ -443,6 +445,7 @@ class SettingsStore:
             BATTERY_EFFICIENCY_DISCHARGE,
             BATTERY_MIN_ACTION_PROFIT_THRESHOLD,
             EXPORT_SPOT_MULTIPLIER,
+            SELL_PRICE_EQUALS_BUY_PRICE,
             SPOT_MULTIPLIER,
             USE_ACTUAL_PRICE,
         )
@@ -522,6 +525,7 @@ class SettingsStore:
             for key, default in (
                 ("spot_multiplier", SPOT_MULTIPLIER),
                 ("export_spot_multiplier", EXPORT_SPOT_MULTIPLIER),
+                ("sell_price_equals_buy_price", SELL_PRICE_EQUALS_BUY_PRICE),
                 ("use_actual_price", USE_ACTUAL_PRICE),
             ):
                 if key not in price:

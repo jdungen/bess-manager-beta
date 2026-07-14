@@ -3432,6 +3432,7 @@ async def setup_complete(payload: APISetupCompletePayload):
             "taxReduction": "tax_reduction",
             "spotMultiplier": "spot_multiplier",
             "exportSpotMultiplier": "export_spot_multiplier",
+            "sellPriceEqualsBuyPrice": "sell_price_equals_buy_price",
         }
         area = payload.area or payload.nordpoolArea
         if any(getattr(payload, f) is not None for f in _PRICE_MAP) or area:
@@ -3570,6 +3571,7 @@ async def setup_complete(payload: APISetupCompletePayload):
                     "tax_reduction": payload.taxReduction,
                     "spot_multiplier": payload.spotMultiplier,
                     "export_spot_multiplier": payload.exportSpotMultiplier,
+                    "sell_price_equals_buy_price": payload.sellPriceEqualsBuyPrice,
                 }
             )
         if live_updates:
