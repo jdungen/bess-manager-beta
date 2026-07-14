@@ -187,7 +187,9 @@ class GrowattMinController(InverterController):
 
         for period in range(start_period, num_periods):
             intent = self.strategic_intents[period]
-            mode = self.INTENT_TO_MODE.get(intent, "load_first")
+            mode = self._effective_mode_for_intent(
+                intent, self.INTENT_TO_MODE.get(intent, "load_first")
+            )
 
             if mode != current_mode:
                 # Save previous group if exists
