@@ -1,5 +1,5 @@
 import React from 'react';
-import { numField, txtInput, radioGroup, SectionCard } from './FormHelpers';
+import { numField, txtInput, radioGroup, toggle, SectionCard } from './FormHelpers';
 
 export interface PricingForm {
   currency: string;
@@ -18,6 +18,7 @@ export interface PricingForm {
   taxReduction: number;
   spotMultiplier: number;
   exportSpotMultiplier: number;
+  sellPriceEqualsBuyPrice: boolean;
 }
 
 interface Props {
@@ -36,7 +37,9 @@ export function PricingFormSection({ form, onChange }: Props) {
   const previewBuy = Number(
     ((previewSpot * sm + form.markupRate) * form.vatMultiplier + form.additionalCosts).toFixed(4),
   );
-  const previewSell = Number((previewSpot * esm + form.taxReduction).toFixed(4));
+  const previewSell = form.sellPriceEqualsBuyPrice
+    ? previewBuy
+    : Number((previewSpot * esm + form.taxReduction).toFixed(4));
 
   return (
     <div className="space-y-3">
@@ -116,6 +119,8 @@ export function PricingFormSection({ form, onChange }: Props) {
       >
         {!isOctopus && (
           <>
+            {toggle('Sell price equals buy price (net metering / saldering)', form.sellPriceEqualsBuyPrice,
+              v => onChange({ ...form, sellPriceEqualsBuyPrice: v }))}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {isEntsoe && numField('Import Spot Multiplier', form.spotMultiplier,
                 v => onChange({ ...form, spotMultiplier: v }),
@@ -129,10 +134,10 @@ export function PricingFormSection({ form, onChange }: Props) {
               {numField('Additional Costs', form.additionalCosts,
                 v => onChange({ ...form, additionalCosts: v }),
                 { unit: `${currency}/kWh`, min: 0, step: 0.001 })}
-              {isEntsoe && numField('Export Spot Multiplier', form.exportSpotMultiplier,
+              {isEntsoe && !form.sellPriceEqualsBuyPrice && numField('Export Spot Multiplier', form.exportSpotMultiplier,
                 v => onChange({ ...form, exportSpotMultiplier: v }),
                 { unit: 'factor (1.0 = no adjustment)', min: 0.5, max: 2.0, step: 0.0001 })}
-              {numField('Export Compensation', form.taxReduction,
+              {!form.sellPriceEqualsBuyPrice && numField('Export Compensation', form.taxReduction,
                 v => onChange({ ...form, taxReduction: v }),
                 { unit: `${currency}/kWh`, min: 0, step: 0.001 })}
             </div>
@@ -149,7 +154,8 @@ export function PricingFormSection({ form, onChange }: Props) {
                 <div className="space-y-2 pt-2 border-t border-blue-200 dark:border-blue-700">
                   <p className="font-medium text-blue-900 dark:text-blue-200">How the raw spot price is converted:</p>
                   <p className="pl-2 border-l-2 border-blue-300 dark:border-blue-600"><strong>Buy price:</strong> (spot × import multiplier + markup) × VAT + additional costs</p>
-                  <p className="pl-2 border-l-2 border-blue-300 dark:border-blue-600"><strong>Sell price:</strong> spot × export multiplier + export compensation</p>
+                  <p className="pl-2 border-l-2 border-blue-300 dark:border-blue-600"><strong>Sell price:</strong> {form.sellPriceEqualsBuyPrice ? 'same as buy price (net metering)' : 'spot × export multiplier + export compensation'}</p>
+                  <div><span className="font-medium text-blue-900 dark:text-blue-200">Sell price equals buy price:</span> Enable under net metering ("saldering" in the Netherlands, in force through 2026): exported energy offsets imported energy 1:1 on your bill, so every exported kWh is worth the full buy price.</div>
                 </div>
               </div>
             ) : (
@@ -164,8 +170,9 @@ export function PricingFormSection({ form, onChange }: Props) {
                 <div className="space-y-2 pt-2 border-t border-blue-200 dark:border-blue-700">
                   <p className="font-medium text-blue-900 dark:text-blue-200">How the raw spot price is converted:</p>
                   <p className="pl-2 border-l-2 border-blue-300 dark:border-blue-600"><strong>Buy price:</strong> (raw spot + markup) × VAT multiplier + grid fees</p>
-                  <p className="pl-2 border-l-2 border-blue-300 dark:border-blue-600"><strong>Sell price:</strong> raw spot + export compensation</p>
+                  <p className="pl-2 border-l-2 border-blue-300 dark:border-blue-600"><strong>Sell price:</strong> {form.sellPriceEqualsBuyPrice ? 'same as buy price (net metering)' : 'raw spot + export compensation'}</p>
                   <p className="text-gray-500 dark:text-gray-500 italic">Note: Markup is added before VAT (ex-VAT), while grid fees already include VAT.</p>
+                  <div><span className="font-medium text-blue-900 dark:text-blue-200">Sell price equals buy price:</span> Enable under net metering ("saldering" in the Netherlands, in force through 2026): exported energy offsets imported energy 1:1 on your bill, so every exported kWh is worth the full buy price. E.g. Tibber NL.</div>
                 </div>
               </div>
             )}

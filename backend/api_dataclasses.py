@@ -1116,6 +1116,7 @@ class APISetupCompletePayload(BaseModel):
     taxReduction: float | None = None
     spotMultiplier: float | None = None
     exportSpotMultiplier: float | None = None
+    sellPriceEqualsBuyPrice: bool | None = None
     # Energy provider
     provider: str | None = None
     # Nordpool HACS entity (required when provider == "nordpool_hacs")

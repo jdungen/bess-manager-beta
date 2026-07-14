@@ -101,6 +101,7 @@ def _valid_options() -> dict:
             "tax_reduction": 0.2,
             "spot_multiplier": 1.0175,
             "export_spot_multiplier": 1.018,
+            "sell_price_equals_buy_price": False,
             "use_actual_price": False,
         },
     }
