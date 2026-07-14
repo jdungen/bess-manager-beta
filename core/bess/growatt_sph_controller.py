@@ -80,6 +80,19 @@ class GrowattSphController(InverterController):
 
     # ── SPH period grouping ───────────────────────────────────────────────────
 
+    def _effective_charge_intents(self) -> frozenset[str]:
+        """Intents that produce an AC charge period, honoring external_solar_mode.
+
+        SOLAR_STORAGE is normally excluded — a DC-coupled SPH charges from
+        its own MPPT without an explicit period.  On AC-coupled PV setups
+        (external_solar_mode) the SPH has no DC solar input, so SOLAR_STORAGE
+        must become an AC charge period or the battery never charges during
+        the planned solar window.
+        """
+        if self.battery_settings.external_solar_mode:
+            return self.CHARGE_INTENTS | {"SOLAR_STORAGE"}
+        return self.CHARGE_INTENTS
+
     def _group_sph_periods(self) -> tuple[list[dict], list[dict]]:
         """Group consecutive strategic intent periods into charge and discharge blocks.
 
@@ -94,7 +107,7 @@ class GrowattSphController(InverterController):
         discharge_blocks: list[dict] = []
 
         for _category, target_list, intent_set in [
-            ("charge", charge_blocks, self.CHARGE_INTENTS),
+            ("charge", charge_blocks, self._effective_charge_intents()),
             ("discharge", discharge_blocks, self.DISCHARGE_INTENTS),
         ]:
             current_block: dict | None = None
@@ -636,7 +649,7 @@ class GrowattSphController(InverterController):
             is_current = run_start <= current_period <= run_end
             marker = "*" if is_current else " "
 
-            if intent in self.CHARGE_INTENTS:
+            if intent in self._effective_charge_intents():
                 action = "charge"
             elif intent in self.DISCHARGE_INTENTS:
                 action = "discharge"

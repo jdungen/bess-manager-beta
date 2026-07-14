@@ -8,6 +8,8 @@ All other intents must keep their default mapping.
 
 import pytest
 
+from core.bess.growatt_min_controller import GrowattMinController
+from core.bess.growatt_sph_controller import GrowattSphController
 from core.bess.settings import BatterySettings
 from core.bess.solax_controller import SolaxController
 
@@ -126,3 +128,79 @@ class TestExternalSolarModeBattModeOverride:
         for group in groups:
             assert group["mode"] == "battery_first"
             assert group["grid_charge"] is True
+
+
+class TestExternalSolarModeGrowattMinTouPath:
+    """The MIN controller's TOU grouping (_group_periods_by_mode) builds the
+    segments actually written to hardware.  It must apply the
+    external_solar_mode override, otherwise SOLAR_STORAGE stays load_first,
+    no TOU segment is created (load_first groups are skipped), and an
+    AC-coupled battery never charges during the solar window.
+    """
+
+    def _controller(self, *, external_solar_mode: bool) -> GrowattMinController:
+        ctrl = GrowattMinController(
+            battery_settings=_settings(external_solar_mode=external_solar_mode)
+        )
+        ctrl.strategic_intents = ["IDLE"] * 40 + ["SOLAR_STORAGE"] * 16 + ["IDLE"] * 40
+        return ctrl
+
+    def test_solar_storage_grouped_as_battery_first_when_enabled(self) -> None:
+        ctrl = self._controller(external_solar_mode=True)
+        groups = ctrl._group_periods_by_mode()
+        modes = [g["mode"] for g in groups]
+        assert "battery_first" in modes
+        solar_group = next(g for g in groups if g["mode"] == "battery_first")
+        assert solar_group["start_period"] == 40
+        assert solar_group["end_period"] == 55
+        assert set(solar_group["intents"]) == {"SOLAR_STORAGE"}
+
+    def test_solar_storage_grouped_as_load_first_when_disabled(self) -> None:
+        ctrl = self._controller(external_solar_mode=False)
+        groups = ctrl._group_periods_by_mode()
+        assert all(g["mode"] == "load_first" for g in groups)
+
+    def test_solar_storage_produces_tou_interval_when_enabled(self) -> None:
+        ctrl = self._controller(external_solar_mode=True)
+        groups = ctrl._group_periods_by_mode()
+        intervals = ctrl._groups_to_tou_intervals(groups)
+        assert len(intervals) == 1
+        assert intervals[0]["batt_mode"] == "battery_first"
+
+    def test_no_tou_interval_when_disabled(self) -> None:
+        ctrl = self._controller(external_solar_mode=False)
+        groups = ctrl._group_periods_by_mode()
+        assert ctrl._groups_to_tou_intervals(groups) == []
+
+
+class TestExternalSolarModeSphChargePeriods:
+    """SPH normally excludes SOLAR_STORAGE from charge periods (a DC-coupled
+    SPH charges from its own MPPT).  With external_solar_mode the SPH has no
+    DC solar input, so SOLAR_STORAGE must produce an AC charge period.
+    """
+
+    def _controller(self, *, external_solar_mode: bool) -> GrowattSphController:
+        ctrl = GrowattSphController(
+            battery_settings=_settings(external_solar_mode=external_solar_mode)
+        )
+        ctrl.strategic_intents = ["IDLE"] * 40 + ["SOLAR_STORAGE"] * 16 + ["IDLE"] * 40
+        return ctrl
+
+    def test_solar_storage_becomes_charge_block_when_enabled(self) -> None:
+        ctrl = self._controller(external_solar_mode=True)
+        charge_blocks, discharge_blocks = ctrl._group_sph_periods()
+        assert len(charge_blocks) == 1
+        assert charge_blocks[0]["start_period"] == 40
+        assert charge_blocks[0]["end_period"] == 55
+        assert discharge_blocks == []
+
+    def test_solar_storage_not_a_charge_block_when_disabled(self) -> None:
+        ctrl = self._controller(external_solar_mode=False)
+        charge_blocks, _ = ctrl._group_sph_periods()
+        assert charge_blocks == []
+
+    def test_grid_charging_still_a_charge_block_when_disabled(self) -> None:
+        ctrl = self._controller(external_solar_mode=False)
+        ctrl.strategic_intents = ["GRID_CHARGING"] * 8 + ["IDLE"] * 88
+        charge_blocks, _ = ctrl._group_sph_periods()
+        assert len(charge_blocks) == 1
